@@ -6,3 +6,4 @@ environment:
 dependencies:
   glob: ^2.1.1
   args: ^2.3.0
+repository: https://github.com/Reshail1/flutter_string_extractor.git
