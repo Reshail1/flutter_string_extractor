@@ -1,15 +1,16 @@
 import 'package:glob/glob.dart';
 import 'dart:io';
+import 'package:glob/list_local_fs.dart';
 
 class FlutterStringExtractor {
   static void extractStrings(String directory, String outputFile) {
     final glob = Glob(directory + '/**.dart');
-    final filePattern = RegExp(r'"([^"]*)"\.tr|\'([^\']*)\'\.tr');
+final filePattern = RegExp(r'"([^"]*)"\.tr|\''([^\']*)\'\.tr');
     final extractedStrings = <String>{};
 
     for (var entity in glob.listSync()) {
       if (entity is File) {
-        final content = entity.readAsStringSync();
+        final content = entity.toString();
         final matches = filePattern.allMatches(content);
         for (var match in matches) {
           // Extract the string inside quotes
