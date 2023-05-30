@@ -5,7 +5,8 @@ import 'package:glob/list_local_fs.dart';
 class FlutterStringExtractor {
   static void extractStrings(String directory, String outputFile) {
     final glob = Glob(directory + '/**.dart');
-final filePattern = RegExp(r'"([^"]*)"\.tr|\''([^\']*)\'\.tr');
+    final filePattern = RegExp(r'"([^"]*)"\.tr|\'
+        '([^\']*)\'\.tr|\btr\(\s*"([^"]*)"\s*\)|\btr\(\s*\'([^\']*)\'\s*\)');
     final extractedStrings = <String>{};
 
     for (var entity in glob.listSync()) {
@@ -23,7 +24,8 @@ final filePattern = RegExp(r'"([^"]*)"\.tr|\''([^\']*)\'\.tr');
     final jsonFile = File(outputFile);
     jsonFile.writeAsStringSync('{\n');
     for (var extractedString in extractedStrings) {
-      jsonFile.writeAsStringSync('  "$extractedString": "$extractedString",\n', mode: FileMode.append);
+      jsonFile.writeAsStringSync('  "$extractedString": "$extractedString",\n',
+          mode: FileMode.append);
     }
     jsonFile.writeAsStringSync('}\n', mode: FileMode.append);
   }
