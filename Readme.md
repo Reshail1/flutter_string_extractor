@@ -34,7 +34,7 @@ Or if you installed it globally:
 flutter_string_extractor ./lib output.json
 ```
 ---
-## Another Approach is to use it as a script:
+## Another Approach is to use it as a package inside your app:
 
 
 
