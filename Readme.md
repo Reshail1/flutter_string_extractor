@@ -1,6 +1,6 @@
 # Flutter String Extractor
 
-A Dart package for extracting strings marked for translation from your Flutter project. It searches through Dart files in a specified directory and its subdirectories, extracts strings marked with `.tr`, and outputs these strings to a JSON file.
+A Dart package for extracting strings marked for translation from your Flutter project. It searches through Dart files in a specified directory and its subdirectories, extracts strings marked with `.tr` and `tr()`, and outputs these strings to a JSON file.
 
 ## Installation
 
