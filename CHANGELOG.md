@@ -1,3 +1,11 @@
+# [0.1.1] - 2023-05-27
+
+## Added
+
+- Added support for tr() function.
+- Updated Readme.md file to reflect the changes.
+- Added support for dart pub global activate flutter_string_extractor.
+
 # [0.1.0] - 2023-05-27
 
 ## Added

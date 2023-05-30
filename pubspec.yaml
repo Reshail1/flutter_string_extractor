@@ -1,6 +1,6 @@
 name: flutter_string_extractor
-version: 0.1.0
-description: Extract .tr strings from Flutter project and save them as JSON
+version: 0.1.1
+description: Extract .tr and tr() strings from Flutter project and save them as JSON
 environment:
   sdk: ">=2.12.0 <3.0.0"
 dependencies:

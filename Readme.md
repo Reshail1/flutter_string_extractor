@@ -4,6 +4,40 @@ A Dart package for extracting strings marked for translation from your Flutter p
 
 ## Installation
 
+### CLI
+To run using cli:
+
+1- You can add this package to your project by adding the following line to your `pubspec.yaml`:
+
+```yaml
+dev_dependencies:
+  flutter_string_extractor: ^0.1.1
+```
+
+2- Then, run `flutter pub get` to fetch the package.
+Alternatively, you can install it globally:
+
+```bash
+dart pub global activate flutter_string_extractor
+```
+## Usage
+
+After you have added the package, you can use it in your project:
+
+```bash 
+dart run flutter_string_extractor:extract --src-dir=lib --output-file=locale.json
+```
+
+Or if you installed it globally:
+
+```bash
+flutter_string_extractor ./lib output.json
+```
+---
+## Another Approach is to use it as a script:
+
+
+
 Add the `flutter_string_extractor` package to your `pubspec.yaml` file:
 
 ```yaml
