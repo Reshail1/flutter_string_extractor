@@ -11,43 +11,23 @@ A command-line tool for extracting translatable strings from Flutter projects. I
 
 ## Installation
 
-You can install the tool globally using:
-
 ```bash
-dart pub global activate --source path .
+# Install globally using pub
+dart pub global activate flutter_string_extractor
+```
+
+Make sure your PATH includes the pub cache bin directory:
+```bash
+# Add this to your ~/.bashrc, ~/.zshrc, or similar
+export PATH="$PATH":"$HOME/.pub-cache/bin"
 ```
 
 ## Usage
 
-After global activation, you can run the tool anywhere using:
+After installation, you can run anywhere using:
 
 ```bash
 flutter_string_extractor -s lib -o strings.json
-```
-
-Or use it directly with dart run:
-
-```bash
-dart run bin/main.dart -s lib -o strings.json
-```
-
-## Running the Tool
-
-### Direct Usage
-
-1. Clone the repository
-2. Navigate to the project directory
-3. Run using one of these commands:
-
-```bash
-# Using dart run
-dart run bin/main.dart -s lib -o strings.json
-
-# With full options
-dart run bin/main.dart --src-dir=lib --output-file=strings.json
-
-# Get help
-dart run bin/main.dart --help
 ```
 
 ### Options

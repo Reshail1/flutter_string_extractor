@@ -1,12 +1,19 @@
 name: flutter_string_extractor
 version: 1.0.0
-description: A tool for extracting translatable strings from Flutter projects
+description: A command-line tool for extracting translatable strings from Flutter projects. It finds strings marked with .tr or tr() in Dart files.
+repository: https://github.com/Reshail1/flutter_string_extractor.git
+homepage: https://github.com/Reshail1/flutter_string_extractor
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: '>=2.12.0 <4.0.0'
 dependencies:
   glob: ^2.1.1
   args: ^2.3.0
-repository: https://github.com/Reshail1/flutter_string_extractor.git
 
 executables:
   flutter_string_extractor: main
+
+topics:
+  - cli
+  - localization
+  - flutter
+  - i18n
