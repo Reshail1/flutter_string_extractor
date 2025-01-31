@@ -1,3 +1,10 @@
+## 1.0.1
+
+* Improved documentation
+* Added example directory with usage samples
+* Fixed SDK constraint format
+* Enhanced error handling in CLI
+
 ## 1.0.0
 
 * First stable release
