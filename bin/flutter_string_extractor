@@ -1,0 +1,11 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DART_SCRIPT="${SCRIPT_DIR}/main.dart"
+
+if command -v dart >/dev/null 2>&1; then
+    exec dart "$DART_SCRIPT" "$@"
+else
+    echo "Error: Dart SDK not found. Please ensure Dart is installed and in your PATH."
+    exit 1
+fi

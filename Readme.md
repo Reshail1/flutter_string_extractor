@@ -1,75 +1,85 @@
 # Flutter String Extractor
 
-A Dart package for extracting strings marked for translation from your Flutter project. It searches through Dart files in a specified directory and its subdirectories, extracts strings marked with `.tr` and `tr()`, and outputs these strings to a JSON file.
+A command-line tool for extracting translatable strings from Flutter projects. It finds strings marked with `.tr` or `tr()` in your Dart files and generates a JSON file.
+
+## Features
+
+- Extracts strings marked with `.tr` (e.g., `"Hello".tr`)
+- Extracts strings in `tr()` function calls (e.g., `tr("Hello")`)
+- Supports both single and double quotes
+- Generates a clean JSON output file
 
 ## Installation
 
-### CLI
-To run using cli:
-
-1- You can add this package to your project by adding the following line to your `pubspec.yaml`:
-
-```yaml
-dev_dependencies:
-  flutter_string_extractor: ^0.1.1
-```
-
-2- Then, run `flutter pub get` to fetch the package.
-Alternatively, you can install it globally:
+You can install the tool globally using:
 
 ```bash
-dart pub global activate flutter_string_extractor
+dart pub global activate --source path .
 ```
+
 ## Usage
 
-After you have added the package, you can use it in your project:
-
-```bash 
-dart run flutter_string_extractor:extract --src-dir=lib --output-file=locale.json
-```
-
-Or if you installed it globally:
+After global activation, you can run the tool anywhere using:
 
 ```bash
-flutter_string_extractor ./lib output.json
+flutter_string_extractor -s lib -o strings.json
 ```
----
-## Another Approach is to use it as a package inside your app:
 
+Or use it directly with dart run:
 
-
-Add the `flutter_string_extractor` package to your `pubspec.yaml` file:
-
-```yaml
-dependencies:
-  flutter_string_extractor: <latest_version>
+```bash
+dart run bin/main.dart -s lib -o strings.json
 ```
-Then, run flutter pub get to fetch the package.
 
+## Running the Tool
+
+### Direct Usage
+
+1. Clone the repository
+2. Navigate to the project directory
+3. Run using one of these commands:
+
+```bash
+# Using dart run
+dart run bin/main.dart -s lib -o strings.json
+
+# With full options
+dart run bin/main.dart --src-dir=lib --output-file=strings.json
+
+# Get help
+dart run bin/main.dart --help
+```
+
+### Options
+
+- `-s, --src-dir`: Source directory to scan (default: "lib")
+- `-o, --output-file`: Output JSON file path (default: "strings.json")
+- `-h, --help`: Show usage information
+
+### Example Output
+
+The tool will generate a JSON file like this:
+
+```json
+{
+  "Hello": "Hello",
+  "Welcome back": "Welcome back",
+  "Settings": "Settings"
+}
+```
+
+## Using as a Library
+
+You can also use this as a library in your Dart code:
 
 ```dart
 import 'package:flutter_string_extractor/flutter_string_extractor.dart';
 
 void main() {
-  String directory = 'lib'; // Directory to search for Dart files
-  String outputFile = 'extracted_strings.json'; // File to output the extracted strings
-
-  FlutterStringExtractor.extractStrings(directory, outputFile);
+  FlutterStringExtractor.extractStrings('lib', 'strings.json');
 }
 ```
-
-This code will search through all Dart files in the lib directory and its subdirectories, extract strings marked with .tr, and output these strings to extracted_strings.json in the following format:
-
-```json
-{
-  "Hello": "Hello",
-  "Goodbye": "Goodbye",
-  ...
-}
-```
-
-## Contributing
-Contributions are always welcome! Please read our contributing guide to learn about our development process, how to propose bugfixes and improvements, and how to build and test your changes.
 
 ## License
-This package is licensed under the MIT license.
+
+MIT License
