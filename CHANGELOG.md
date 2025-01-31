@@ -1,3 +1,12 @@
+## 1.1.0
+
+* Added comprehensive API documentation
+* Added example directory with sample code
+* Added detailed usage examples in README
+* Enhanced CLI error messages and feedback
+* Fixed SDK constraint format
+* Improved file path handling
+
 ## 1.0.1
 
 * Improved documentation
