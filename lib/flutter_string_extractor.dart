@@ -3,7 +3,31 @@ import 'package:glob/glob.dart';
 import 'dart:io';
 import 'package:glob/list_local_fs.dart';
 
+/// A utility class for extracting translatable strings from Flutter/Dart source files.
+/// 
+/// This class provides functionality to scan Dart files for strings marked with
+/// either `.tr` extension method or wrapped in `tr()` function calls, which are
+/// commonly used for internationalization in Flutter applications.
 class FlutterStringExtractor {
+  /// Extracts translatable strings from Dart files in the specified directory.
+  /// 
+  /// Parameters:
+  /// - [directory]: The path to the directory containing Dart files to scan.
+  /// - [outputFile]: The path where the JSON file containing extracted strings will be saved.
+  /// 
+  /// Example:
+  /// ```dart
+  /// FlutterStringExtractor.extractStrings('lib', 'translations.json');
+  /// ```
+  /// 
+  /// The output JSON file will contain key-value pairs where both key and value
+  /// are the same string, ready for translation:
+  /// ```json
+  /// {
+  ///   "Hello": "Hello",
+  ///   "Welcome": "Welcome"
+  /// }
+  /// ```
   static void extractStrings(String directory, String outputFile) {
     final glob = Glob('$directory/**.dart');
     final filePattern = RegExp(
