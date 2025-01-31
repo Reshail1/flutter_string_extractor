@@ -9,7 +9,7 @@ void main() {
 
   // Extract strings from the lib directory
   FlutterStringExtractor.extractStrings('lib', 'translations.json');
-  
+
   // This will create a translations.json file with content like:
   // {
   //   "Hello": "Hello",

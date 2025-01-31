@@ -11,9 +11,7 @@ void main(List<String> arguments) {
         defaultsTo: 'lib',
         help: 'Source directory to scan for Dart files')
     ..addOption('output-file',
-        abbr: 'o',
-        defaultsTo: 'strings.json',
-        help: 'Output JSON file path')
+        abbr: 'o', defaultsTo: 'strings.json', help: 'Output JSON file path')
     ..addFlag('help', abbr: 'h', help: 'Show usage information');
 
   try {

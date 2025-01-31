@@ -1,3 +1,13 @@
+## 1.1.2
+
+* Updated README with clearer installation and usage instructions
+* Improved documentation formatting
+
+## 1.1.1
+
+* Applied dart format to improve code formatting
+* Enhanced code style consistency
+
 ## 1.1.0
 
 * Added comprehensive API documentation
