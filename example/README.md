@@ -1,21 +1,23 @@
 # Flutter String Extractor Example
 
-This example demonstrates how to use the Flutter String Extractor to extract translatable strings from your Flutter project.
+This example previews the strings extracted from a Flutter project's source
+without creating or modifying a translation file. Requires Dart 3.9+.
 
 ## Usage
 
-```dart
-import 'package:flutter_string_extractor/flutter_string_extractor.dart';
+Run from this package directory:
 
-void main() {
-  // Extract strings from the lib directory
-  FlutterStringExtractor.extractStrings('lib', 'translations.json');
-}
+```bash
+dart run example/main.dart /path/to/flutter_app/lib
 ```
+
+The preview is JSON on stdout; unresolved keys are reported on stderr. To write
+a catalog, use `dart run bin/main.dart -s /path/to/flutter_app/lib -o strings.json`.
+Existing translations are preserved by default.
 
 ## Source Code Examples
 
-In your Flutter project, mark strings for translation using either:
+The extractor recognizes actual Dart expressions, including:
 
 ```dart
 // Using .tr extension
@@ -25,9 +27,17 @@ Text('Welcome back'.tr);
 // Using tr() function
 Text(tr("Settings"));
 Text(tr('Logout'));
+
+// Other supported translation patterns
+Text('Welcome @name'.trParams({'name': userName}));
+Text(context.tr('profile.title'));
+Text('items').plural(itemCount);
+Text(translate('home.title'));
+Text(FlutterI18n.translate(context, 'account.title'));
+Text('Good morning'.i18n);
 ```
 
-Running the extractor will generate a JSON file with all these strings:
+For the first four expressions, the preview contains:
 
 ```json
 {
@@ -37,3 +47,8 @@ Running the extractor will generate a JSON file with all these strings:
   "Logout": "Logout"
 }
 ```
+
+Comments are ignored. Dynamic keys are reported rather than guessed. For
+`AppLocalizations` or `S.of(context)` messages, import their source ARB catalog
+with the CLI's `--from-arb` option. See [the package README](../README.md) for
+the full support table and file-safety details.

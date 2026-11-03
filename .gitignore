@@ -46,3 +46,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+coverage/
+
+# Local provider credentials; never commit real API keys.
+.env
+.env.*
+!.env.example
+
+# Local implementation notes are not release/source documentation.
+/PROJECT_REVIEW.md
+/doc/plans/

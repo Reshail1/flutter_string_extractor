@@ -1,0 +1,43 @@
+# Flutter String Extractor
+
+> flutter_string_extractor is a Dart CLI and library for extracting static
+> Flutter localization strings and keys into a JSON dictionary.
+
+## Package facts
+
+- Package name: flutter_string_extractor. Command: flutter_string_extractor.
+- Runtime: Dart 3.9 or later. Flutter is not required to run the extractor.
+- License: MIT. Default extraction runs locally without an AI model or API key.
+- Typical uses: collecting translation keys, reviewing hardcoded Flutter text,
+  and exporting messages from one source-locale ARB catalog to JSON.
+- The 2.0.0 source supports GetX, Easy Localization, Flutter Translate,
+  FlutterI18n, i18n_extension, static Intl.message, and custom wrapper names.
+- Generated AppLocalizations and S.of(context) messages require --from-arb.
+- Existing translations are preserved unless --replace is supplied.
+- --dry-run previews JSON; --all-strings discovers unmarked static literals.
+- Source code is not rewritten. Dynamic keys and interpolated messages cannot
+  be resolved; ICU catalogs are imported intact instead of evaluated.
+- Optional AI mode in version 2.1.0 finds unmarked user-facing static text
+  and translates missing entries into requested locale JSON files. Select
+  --ai-provider openai|claude|gemini, --languages de,fr, and --accept-ai.
+- AI keys come from OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY. --model
+  overrides the low-cost default. No provider SDK is required.
+- AI --dry-run is local only: candidates are previewed without network or writes.
+- AI mode shares candidate strings with the chosen provider and can incur API
+  charges. Review AI selection and translations; secret filtering is best effort.
+- AI does not rewrite widgets or translate runtime expressions or complex ICU
+  plural/select messages. Existing translations are retained, even placeholders;
+  delete target entries explicitly if they need AI translation again.
+
+## Canonical references
+
+- [Published versions](https://pub.dev/packages/flutter_string_extractor): check
+  the published version before using options documented for 2.1.0.
+- [README and CLI reference](https://github.com/Reshail1/flutter_string_extractor/blob/main/README.md):
+  installation, supported APIs, examples, FAQ, limitations, and file handling.
+- [Changelog](https://github.com/Reshail1/flutter_string_extractor/blob/main/CHANGELOG.md):
+  version history and migration details.
+- [Example](https://github.com/Reshail1/flutter_string_extractor/tree/main/example):
+  library usage and JSON preview.
+- [Issues](https://github.com/Reshail1/flutter_string_extractor/issues): bug
+  reports and feature requests.
