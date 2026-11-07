@@ -1,6 +1,7 @@
 #!/usr/bin/env dart
 
 import 'dart:io';
+
 import 'package:flutter_string_extractor/ai_string_extractor.dart';
 import 'package:flutter_string_extractor/flutter_string_extractor.dart';
 import 'package:args/args.dart';
@@ -37,8 +38,7 @@ Future<void> main(List<String> arguments) async {
     ..addFlag(
       'include-generated',
       negatable: false,
-      help:
-          'Include generated Dart files (cache/build directories stay excluded)',
+      help: 'Include generated Dart files (cache/build directories stay excluded)',
     )
     ..addMultiOption(
       'exclude',
@@ -62,8 +62,8 @@ Future<void> main(List<String> arguments) async {
     )
     ..addOption(
       'ai-provider',
-      allowed: ['openai', 'claude', 'gemini'],
-      help: 'Opt in to AI discovery and translation using your own API key',
+      allowed: ['openai', 'claude', 'gemini', 'local'],
+      help: 'Opt in to cloud or local AI discovery and translation',
     )
     ..addMultiOption(
       'languages',
@@ -77,6 +77,19 @@ Future<void> main(List<String> arguments) async {
     ..addOption(
       'model',
       help: 'Provider model ID; defaults to a low-cost model',
+    )
+    ..addOption(
+      'ai-base-url',
+      help: 'Local OpenAI-compatible base URL (default http://127.0.0.1:11434/v1)',
+    )
+    ..addOption(
+      'ai-timeout',
+      help: 'Request timeout: 1–3600 seconds (cloud 60; local 180)',
+    )
+    ..addOption(
+      'context',
+      defaultsTo: '',
+      help: 'App domain, audience, tone and terminology (max 2,000 characters; no secrets)',
     )
     ..addOption(
       'output-dir',
@@ -123,15 +136,33 @@ Future<void> main(List<String> arguments) async {
           'languages',
           'source-language',
           'model',
+          'ai-base-url',
+          'ai-timeout',
+          'context',
           'output-dir',
           'max-ai-requests',
           'accept-ai',
         ].any(argResults.wasParsed)) {
       throw FormatException(
-        'AI options require --ai-provider openai, claude, or gemini.',
+        'AI options require --ai-provider openai, claude, gemini, or local.',
       );
     }
     if (providerName != null) {
+      if (argResults.wasParsed('ai-base-url') && providerName != 'local') {
+        throw FormatException('--ai-base-url requires --ai-provider local.');
+      }
+      final timeoutArgument = argResults['ai-timeout'] as String?;
+      final timeoutSeconds = timeoutArgument == null
+          ? null
+          : int.tryParse(timeoutArgument);
+      if (timeoutArgument != null &&
+          (timeoutSeconds == null ||
+              timeoutSeconds < 1 ||
+              timeoutSeconds > 3600)) {
+        throw FormatException(
+          '--ai-timeout must be an integer from 1 to 3600 seconds.',
+        );
+      }
       if (argResults.wasParsed('output-file') ||
           argResults['replace'] as bool) {
         throw FormatException(
@@ -139,10 +170,13 @@ Future<void> main(List<String> arguments) async {
         );
       }
       final maxRequests = int.tryParse(argResults['max-ai-requests'] as String);
-      if (maxRequests == null || maxRequests < 1)
+      if (maxRequests == null || maxRequests < 1) {
         throw FormatException('--max-ai-requests must be a positive integer.');
+      }
       final provider = AiProvider.values.byName(providerName);
-      stderr.writeln('AI disclaimer: ${AiStringExtractor.disclaimer}');
+      stderr.writeln(
+        'AI disclaimer: ${provider == AiProvider.local ? AiStringExtractor.localDisclaimer : AiStringExtractor.disclaimer}',
+      );
       stderr.writeln(
         'Provider: ${provider.name}; model: ${argResults['model'] ?? provider.defaultModel}.',
       );
@@ -154,6 +188,11 @@ Future<void> main(List<String> arguments) async {
           languages: argResults['languages'] as List<String>,
           sourceLanguage: argResults['source-language'] as String,
           model: argResults['model'] as String?,
+          baseUrl: argResults['ai-base-url'] as String?,
+          timeout: timeoutSeconds == null
+              ? null
+              : Duration(seconds: timeoutSeconds),
+          projectContext: argResults['context'] as String,
           dryRun: argResults['dry-run'] as bool,
           acceptAi: argResults['accept-ai'] as bool,
           maxRequests: maxRequests,

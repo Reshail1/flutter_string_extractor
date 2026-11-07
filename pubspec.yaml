@@ -1,16 +1,17 @@
 name: flutter_string_extractor
-version: 2.1.0
-description: Extract Flutter localization strings to JSON with safe catalog merging and optional AI discovery and translation using OpenAI, Claude, or Gemini.
+version: 3.0.0
+description: Extract Flutter strings to JSON with safe catalog merging and optional AI discovery and translation using OpenAI, Claude, Gemini, or local models.
 homepage: https://github.com/Reshail1/flutter_string_extractor
 environment:
-  sdk: ">=3.9.0 <4.0.0"
+  sdk: ">=3.13.0 <4.0.0"
 dependencies:
-  analyzer: ^12.1.0
+  analyzer: ^14.7.0
   args: ^2.7.0
   glob: ^2.2.0
   path: ^1.9.1
 dev_dependencies:
-  test: ^1.31.0
+  lints: ^6.1.0
+  test: ^1.33.0
 repository: https://github.com/Reshail1/flutter_string_extractor.git
 issue_tracker: https://github.com/Reshail1/flutter_string_extractor/issues
 documentation: https://github.com/Reshail1/flutter_string_extractor/blob/main/README.md

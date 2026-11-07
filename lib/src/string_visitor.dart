@@ -10,6 +10,7 @@ class StringVisitor extends RecursiveAstVisitor<void> {
     Iterable<String> getters = const [],
     Set<String>? namedMessages,
     this.onWarning,
+    this.onMessage,
   }) : functions = {
          'tr',
          'plural',
@@ -26,6 +27,7 @@ class StringVisitor extends RecursiveAstVisitor<void> {
   final Set<String> getters;
   final Set<String> namedMessages;
   final void Function(int offset, String reason)? onWarning;
+  final void Function(String key, int offset, String context)? onMessage;
   final Set<int> _warned = {};
 
   static const _extensions = {
@@ -64,6 +66,7 @@ class StringVisitor extends RecursiveAstVisitor<void> {
       } else {
         messages.putIfAbsent(value, () => value);
       }
+      onMessage?.call(key ?? value, expression.offset, _context(expression));
     } else if (value == null && _warned.add(expression.offset)) {
       onWarning?.call(
         expression.offset,
@@ -72,14 +75,36 @@ class StringVisitor extends RecursiveAstVisitor<void> {
     }
   }
 
+  String _context(AstNode expression) {
+    final roles = <String>[];
+    for (AstNode? node = expression.parent; node != null; node = node.parent) {
+      final role = switch (node) {
+        NamedArgument n => 'argument ${n.name.lexeme}',
+        MethodInvocation n => 'call ${n.methodName.name}',
+        InstanceCreationExpression n =>
+          'widget ${n.constructorName.type.name.lexeme}',
+        VariableDeclaration n => 'variable ${n.name.lexeme}',
+        MethodDeclaration n => 'method ${n.name.lexeme}',
+        FunctionDeclaration n => 'function ${n.name.lexeme}',
+        ClassDeclaration n => 'class ${n.namePart.typeName.lexeme}',
+        _ => null,
+      };
+      if (role != null) roles.add(role);
+      if (roles.length == 6) break;
+    }
+    // Structural identifiers only; never serialize neighboring code or literals.
+    return roles.reversed.join(' > ');
+  }
+
   void _discover(StringLiteral node) {
     if (!allStrings) return;
     AstNode? parent = node.parent;
     while (parent != null) {
       if (parent is Directive ||
           parent is StringInterpolation ||
-          parent is AdjacentStrings)
+          parent is AdjacentStrings) {
         return;
+      }
       parent = parent.parent;
     }
     _add(node);
@@ -106,11 +131,11 @@ class StringVisitor extends RecursiveAstVisitor<void> {
   Expression? _textArgument(Expression target) {
     target = _unwrap(target);
     if (target is MethodInvocation && target.methodName.name == 'Text') {
-      return target.argumentList.arguments.firstOrNull;
+      return target.argumentList.arguments.whereType<Expression>().firstOrNull;
     }
     if (target is InstanceCreationExpression &&
         target.constructorName.type.name.lexeme == 'Text') {
-      return target.argumentList.arguments.firstOrNull;
+      return target.argumentList.arguments.whereType<Expression>().firstOrNull;
     }
     return null;
   }
@@ -134,12 +159,12 @@ class StringVisitor extends RecursiveAstVisitor<void> {
     final name = node.methodName.name;
     final target = node.realTarget;
     final positional = node.argumentList.arguments
-        .where((a) => a is! NamedExpression)
+        .whereType<Expression>()
         .toList();
     final named = {
       for (final argument
-          in node.argumentList.arguments.whereType<NamedExpression>())
-        argument.name.label.name: argument.expression,
+          in node.argumentList.arguments.whereType<NamedArgument>())
+        argument.name.lexeme: argument.argumentExpression,
     };
     final targetName = target?.toSource().split('.').last;
     if (targetName == 'Intl' && name == 'message') {

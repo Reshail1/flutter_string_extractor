@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        sdk: ['3.9.0', stable]
+        sdk: ['3.13.0', stable]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -29,10 +29,10 @@ jobs:
       - name: Install dependencies
         run: dart pub get
       - name: Check formatting
-        if: matrix.sdk == '3.9.0'
+        if: matrix.sdk == '3.13.0'
         run: dart format --output=none --set-exit-if-changed lib bin test example
       - name: Analyze
-        run: dart analyze
+        run: dart analyze --fatal-infos
       - name: Test with shuffled ordering
         run: dart test --test-randomize-ordering-seed=421
       - name: Validate package

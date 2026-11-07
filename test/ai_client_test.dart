@@ -7,7 +7,9 @@ void main() {
   late AiServer server;
   tearDown(() => server.close());
 
-  for (final provider in AiProvider.values) {
+  for (final provider in AiProvider.values.where(
+    (p) => p != AiProvider.local,
+  )) {
     test(
       '$provider sends JSON with the selected model and authenticates',
       () async {
@@ -38,8 +40,9 @@ void main() {
               provider == AiProvider.openai ? '/v1/responses' : '/v1/messages',
             );
           }
-          if (provider == AiProvider.openai)
+          if (provider == AiProvider.openai) {
             expect(request.body['store'], isFalse);
+          }
           return {
             'translations': {'0': 'Hallo'},
           };
@@ -77,10 +80,9 @@ void main() {
       server = await AiServer.start(
         (_) => switch (provider) {
           AiProvider.openai => '{"status":"incomplete","output":[]}',
-          AiProvider.claude =>
-            '{"stop_reason":"max_tokens","content":[{"type":"text","text":"{}"}]}',
-          AiProvider.gemini =>
-            '{"candidates":[{"finishReason":"SAFETY","content":{"parts":[{"text":"{}"}]}}]}',
+          AiProvider.claude => '{"stop_reason":"max_tokens","content":[{"type":"text","text":"{}"}]}',
+          AiProvider.gemini => '{"candidates":[{"finishReason":"SAFETY","content":{"parts":[{"text":"{}"}]}}]}',
+          AiProvider.local => '{"choices":[]}',
         },
       );
       server.rawResponse = true;

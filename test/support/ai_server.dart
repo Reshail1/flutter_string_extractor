@@ -16,6 +16,12 @@ class AiRequest {
       text = body['input'] as String;
     } else if (uri.host == 'api.anthropic.com') {
       text = body['messages'][0]['content'] as String;
+    } else if (body['messages'] is List) {
+      text =
+          (body['messages'] as List).firstWhere(
+                (m) => m['role'] == 'user',
+              )['content']
+              as String;
     } else {
       text = body['contents'][0]['parts'][0]['text'] as String;
     }
@@ -55,7 +61,7 @@ class AiServer {
     return AiClient(
       provider: provider,
       apiKey: 'test-secret-key',
-      model: model,
+      model: model ?? (provider == AiProvider.local ? 'test-small' : null),
       httpClient: transport,
       timeout: timeout,
     );
@@ -101,7 +107,7 @@ class AiServer {
               {'type': 'text', 'text': text},
             ],
           },
-          _ => {
+          'generativelanguage.googleapis.com' => {
             'candidates': [
               {
                 'finishReason': 'STOP',
@@ -111,6 +117,14 @@ class AiServer {
                     {'text': text},
                   ],
                 },
+              },
+            ],
+          },
+          _ => {
+            'choices': [
+              {
+                'finish_reason': 'stop',
+                'message': {'role': 'assistant', 'content': text},
               },
             ],
           },

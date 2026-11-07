@@ -6,11 +6,12 @@
 ## Package facts
 
 - Package name: flutter_string_extractor. Command: flutter_string_extractor.
-- Runtime: Dart 3.9 or later. Flutter is not required to run the extractor.
+- Version 3.0.0 requires Dart 3.13 or later. Version 2.1.0 supports Dart 3.9+.
+  Flutter is not required to run the extractor.
 - License: MIT. Default extraction runs locally without an AI model or API key.
 - Typical uses: collecting translation keys, reviewing hardcoded Flutter text,
   and exporting messages from one source-locale ARB catalog to JSON.
-- The 2.0.0 source supports GetX, Easy Localization, Flutter Translate,
+- Supports GetX, Easy Localization, Flutter Translate,
   FlutterI18n, i18n_extension, static Intl.message, and custom wrapper names.
 - Generated AppLocalizations and S.of(context) messages require --from-arb.
 - Existing translations are preserved unless --replace is supplied.
@@ -29,10 +30,24 @@
   plural/select messages. Existing translations are retained, even placeholders;
   delete target entries explicitly if they need AI translation again.
 
+## Context-aware translation and local models in 3.0.0
+
+- Context-aware prompts use bounded source/UI hints, translation IDs and ARB
+  descriptions. --context adds app-domain, audience and terminology guidance.
+- Source context is included in preview and provider requests; it may be private.
+- --ai-provider local uses loopback OpenAI-compatible Chat Completions APIs
+  (Ollama, LM Studio or vLLM). --model must name an installed/loaded model.
+- --ai-base-url overrides the local API base; --ai-timeout overrides request
+  deadlines. LOCAL_AI_API_KEY is optional; cloud keys are never reused locally.
+- No model downloads or cloud fallback. Configure the server itself for offline
+  execution. Semantic accuracy still requires human review.
+- Install or update the published 3.0.0 CLI with Dart 3.13 or later to use
+  these options. Version 2.1.0 does not support local models or context hints.
+
 ## Canonical references
 
 - [Published versions](https://pub.dev/packages/flutter_string_extractor): check
-  the published version before using options documented for 2.1.0.
+  the published version before using options documented for 3.0.0.
 - [README and CLI reference](https://github.com/Reshail1/flutter_string_extractor/blob/main/README.md):
   installation, supported APIs, examples, FAQ, limitations, and file handling.
 - [Changelog](https://github.com/Reshail1/flutter_string_extractor/blob/main/CHANGELOG.md):

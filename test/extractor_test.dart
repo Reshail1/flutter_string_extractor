@@ -286,58 +286,49 @@ void f() {
     },
   );
 
-  test(
-    'same translation key is not replaced by an argument to a dynamic extension',
-    () {
-      writeSource(
-        "void f(String key) { key.trPlural('plural.key', 2); key.trParams({'name':'Alice'}); }",
-      );
-      final result = FlutterStringExtractor.extractStrings(
+  test('same translation key is not replaced by an argument to a dynamic extension', () {
+    writeSource(
+      "void f(String key) { key.trPlural('plural.key', 2); key.trParams({'name':'Alice'}); }",
+    );
+    final result = FlutterStringExtractor.extractStrings(
+      source.path,
+      output.path,
+      dryRun: true,
+    );
+    expect(result.translations, {'plural.key': 'plural.key'});
+    expect(result.warnings, hasLength(2));
+  });
+
+  test('Intl complex messages request a catalog instead of exporting incomplete branches', () {
+    writeSource(
+      "void f(n) { Intl.plural(n, one: 'One', other: 'Many', name: 'items'); }",
+    );
+    final result = FlutterStringExtractor.extractStrings(
+      source.path,
+      output.path,
+      dryRun: true,
+    );
+    expect(result.translations, isEmpty);
+    expect(result.warnings, hasLength(1));
+    expect(result.warnings.single, contains('--from-arb'));
+  });
+
+  test('replacement still refuses invalid existing JSON and nonregular destinations', () {
+    writeSource("void f() { 'Hello'.tr; }");
+    output.writeAsStringSync('not JSON');
+    expect(
+      () => FlutterStringExtractor.extractStrings(
         source.path,
         output.path,
-        dryRun: true,
-      );
-      expect(result.translations, {'plural.key': 'plural.key'});
-      expect(result.warnings, hasLength(2));
-    },
-  );
-
-  test(
-    'Intl complex messages request a catalog instead of exporting incomplete branches',
-    () {
-      writeSource(
-        "void f(n) { Intl.plural(n, one: 'One', other: 'Many', name: 'items'); }",
-      );
-      final result = FlutterStringExtractor.extractStrings(
-        source.path,
-        output.path,
-        dryRun: true,
-      );
-      expect(result.translations, isEmpty);
-      expect(result.warnings, hasLength(1));
-      expect(result.warnings.single, contains('--from-arb'));
-    },
-  );
-
-  test(
-    'replacement still refuses invalid existing JSON and nonregular destinations',
-    () {
-      writeSource("void f() { 'Hello'.tr; }");
-      output.writeAsStringSync('not JSON');
-      expect(
-        () => FlutterStringExtractor.extractStrings(
-          source.path,
-          output.path,
-          replace: true,
-        ),
-        throwsA(isA<FormatException>()),
-      );
-      expect(output.readAsStringSync(), 'not JSON');
-      output.deleteSync();
-      Directory(output.path).createSync();
-      expect(() => extract(), throwsA(isA<FileSystemException>()));
-    },
-  );
+        replace: true,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    expect(output.readAsStringSync(), 'not JSON');
+    output.deleteSync();
+    Directory(output.path).createSync();
+    expect(() => extract(), throwsA(isA<FileSystemException>()));
+  });
 
   test('finds marked calls inside adjacent interpolated strings', () {
     writeSource(r'''void f() { Text('Header: ' '${tr("nested.key")}'); }''');
@@ -393,13 +384,9 @@ void f() {
     skip: Platform.isWindows,
   );
 
-  test(
-    'new POSIX translation files start with private permissions',
-    () {
-      writeSource("void f() { 'Hello'.tr; }");
-      extract();
-      expect(output.statSync().mode & 0x1ff, 0x180);
-    },
-    skip: Platform.isWindows,
-  );
+  test('new POSIX translation files start with private permissions', () {
+    writeSource("void f() { 'Hello'.tr; }");
+    extract();
+    expect(output.statSync().mode & 0x1ff, 0x180);
+  }, skip: Platform.isWindows);
 }

@@ -96,13 +96,100 @@ void main() {
   });
 
   test(
+    'local AI preview works without keys and includes project/source context',
+    () async {
+      writeSource("class BookingScreen { void f() { Text('Book'); } }");
+      final result = await run(
+        [
+          '--ai-provider',
+          'local',
+          '--model',
+          'organization/small:latest',
+          '--ai-base-url',
+          'http://localhost:1234/v1',
+          '--ai-timeout',
+          '300',
+          '--languages',
+          'de',
+          '--context',
+          'Flight reservations.',
+          '--dry-run',
+        ],
+        environment: {
+          'LOCAL_AI_API_KEY': '',
+          'OPENAI_API_KEY': 'unused-cloud-key',
+        },
+      );
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      final preview = jsonDecode(result.stdout as String);
+      expect(preview['candidates'], {'Book': 'Book'});
+      expect(preview['projectContext'], 'Flight reservations.');
+      expect(jsonEncode(preview['messageContext']), contains('BookingScreen'));
+      expect(result.stderr, contains('loopback'));
+      expect(result.stderr, isNot(contains('unused-cloud-key')));
+      expect(result.stderr, isNot(contains('API usage may incur charges')));
+      expect(output.existsSync(), isFalse);
+    },
+  );
+
+  test('local preview requires an explicit installed model', () async {
+    writeSource("void f() { Text('Book'); }");
+    final result = await run([
+      '--ai-provider',
+      'local',
+      '--languages',
+      'de',
+      '--dry-run',
+    ]);
+    expect(result.exitCode, isNot(0));
+    expect(result.stderr, contains('Local AI requires --model'));
+  });
+
+  test('rejects local endpoint overrides for cloud providers', () async {
+    final result = await run([
+      '--ai-provider',
+      'openai',
+      '--ai-base-url',
+      'http://localhost:1234/v1',
+      '--languages',
+      'de',
+      '--dry-run',
+    ]);
+    expect(result.exitCode, 64);
+    expect(
+      result.stderr,
+      contains('--ai-base-url requires --ai-provider local'),
+    );
+  });
+
+  test('rejects invalid AI timeout and context without a provider', () async {
+    for (final timeout in ['0', '-1', 'abc']) {
+      final result = await run([
+        '--ai-provider',
+        'local',
+        '--model',
+        'small',
+        '--ai-timeout',
+        timeout,
+        '--languages',
+        'de',
+        '--dry-run',
+      ]);
+      expect(result.exitCode, isNot(0));
+      expect(result.stderr, contains('--ai-timeout'));
+    }
+    final context = await run(['--context', 'Travel app', '--dry-run']);
+    expect(context.exitCode, 64);
+    expect(context.stderr, contains('--ai-provider'));
+  });
+
+  test(
     'AI malformed catalogs do not expose credential contents in diagnostics',
     () async {
       writeSource("void f() { Text('Welcome'); }");
       final folder = Directory(p.join(root.path, 'translations'))..createSync();
-      File(
-        p.join(folder.path, 'en.json'),
-      ).writeAsStringSync('test-super-private-credential invalid json');
+      File(p.join(folder.path, 'en.json'))
+          .writeAsStringSync('test-super-private-credential invalid json');
       final result = await run([
         '--ai-provider',
         'openai',
@@ -182,10 +269,8 @@ void main() {
     },
   );
 
-  test(
-    'all-strings discovers unmarked static literals but skips directives and interpolation',
-    () async {
-      writeSource(r'''
+  test('all-strings discovers unmarked static literals but skips directives and interpolation', () async {
+    writeSource(r'''
 import 'package:flutter/widgets.dart';
 void f(String name) {
   Text("Don't forget");
@@ -194,15 +279,14 @@ void f(String name) {
   tr('Marked');
 }
 ''');
-      final result = await run(['--all-strings']);
-      expect(result.exitCode, 0, reason: result.stderr.toString());
-      expect(jsonDecode(output.readAsStringSync()), {
-        "Don't forget": "Don't forget",
-        'Adjacent literal': 'Adjacent literal',
-        'Marked': 'Marked',
-      });
-    },
-  );
+    final result = await run(['--all-strings']);
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    expect(jsonDecode(output.readAsStringSync()), {
+      "Don't forget": "Don't forget",
+      'Adjacent literal': 'Adjacent literal',
+      'Marked': 'Marked',
+    });
+  });
 
   test(
     'exclusions are relative glob patterns and generated files are opt-in',
@@ -331,9 +415,9 @@ void f(String name) {
       'Hello': 'Hello',
     });
     expect(
-      Directory(
-        p.dirname(destination),
-      ).listSync().map((f) => p.basename(f.path)),
+      Directory(p.dirname(destination))
+          .listSync()
+          .map((f) => p.basename(f.path)),
       ['en.json'],
     );
   });

@@ -9,7 +9,8 @@ JSON catalog. Repeated runs preserve your translations and old keys by default.
 Dart syntax parsing handles quotes, escapes, raw strings, multiline strings,
 and adjacent literals, while ignoring comments.
 
-Requires **Dart 3.9 or later**. No Flutter SDK is needed to run the extractor.
+Version **3.0.0 requires Dart 3.13 or later**. Use 2.1.0 for Dart 3.9–3.12.
+No Flutter SDK is needed to run the extractor.
 Source files are read only; extraction does not rewrite widgets or insert
 translation calls.
 
@@ -17,7 +18,8 @@ Use it to collect GetX or Easy Localization keys, discover hardcoded Flutter
 text before localization, or export an ARB catalog to a JSON dictionary. It
 runs locally without a translation service or API key by default. An optional
 [AI workflow](#optional-ai-discovery-and-translation) finds unmarked text and
-translates it using your own OpenAI, Claude, or Gemini API key.
+translates it using your own OpenAI, Claude, or Gemini API key, or a local
+OpenAI-compatible model such as one served by Ollama or LM Studio.
 
 Package: [`flutter_string_extractor` on pub.dev](https://pub.dev/packages/flutter_string_extractor).
 Source, issues, and releases: [Reshail1/flutter_string_extractor on GitHub](https://github.com/Reshail1/flutter_string_extractor).
@@ -52,9 +54,9 @@ the JSON dictionary is:
 Edit the values to add translations. Subsequent runs keep translated values and
 add missing keys. Preview first with `--dry-run`.
 
-This documentation describes **2.1.0**, including optional AI discovery and
-translation. Upgrade an existing installation with
-`dart pub global activate flutter_string_extractor`.
+This documentation describes **3.0.0**, including context-aware AI discovery,
+translation and local models. Upgrade your Dart SDK to 3.13 or later, then run
+`dart pub global activate flutter_string_extractor` to update an existing installation.
 
 ## Install from source
 
@@ -144,6 +146,9 @@ that provider's data policies, and your API usage may incur charges. Source file
 are never uploaded as complete files, but individual literals can still contain
 private information. Credential filtering is best effort, not a confidentiality
 guarantee: preview and exclude sensitive files before opting in.
+The context-aware workflow also sends translation-key hints,
+relative source locations, structural UI/identifier roles, ARB descriptions and
+any project context you supply. These can also contain private information.
 
 From your Flutter project root, preview locally first:
 
@@ -216,8 +221,8 @@ batch and a default limit of 100 requests per run. Classification of newly seen
 unmarked candidates also consumes requests; previously rejected candidates can
 be classified again on subsequent runs. No automatic retries are made. Provider
 errors, invalid JSON/IDs, missing translations, and changed placeholder names or
-counts abort before any catalog writes. Requests have a 60-second timeout and a
-1 MiB response limit. Provider error bodies are never printed. The request cap
+counts abort before any catalog writes. Cloud requests default to a 60-second
+timeout and a 1 MiB response limit. Provider error bodies are never printed. The request cap
 is not a currency budget; earlier calls can still be billed if a later call fails.
 
 Static messages longer than 2,000 characters are skipped with a warning. Runtime
@@ -237,6 +242,83 @@ AiProvider.gemini, languages: ['de', 'ur'], acceptAi: true)`. It uses the same
 environment keys and safety checks as the CLI. Use `dryRun: true` for local
 preview; `result.previewJson`, `messages`, `filesScanned`, `translatedCount`,
 `requestCount`, `outputFiles`, and `warnings` describe the result.
+
+### Context-aware prompts and local models
+
+Available in **3.0.0**. Run the examples from your Flutter application root
+after installing or updating the CLI with Dart 3.13 or later.
+
+Prompts now use UI roles and source locations to distinguish a button action
+from a noun, preserve the intent of confirmation questions, prefer natural
+target-language grammar, and maintain domain terminology and locale conventions.
+They ask the model to check meaning and completeness before returning JSON.
+Placeholder, markup-tag/attribute and line-break checks reject structural
+changes before writing catalogs. These checks do **not** prove semantic accuracy.
+
+Each candidate has a key hint (at most 160 characters) and up to two source
+usages (240 characters each). Usages contain relative file names/line numbers
+and widget, argument, variable, function or class identifiers. ARB `description`
+metadata is used where supplied. Surrounding code and neighboring literal
+values are not included. Preview shows these hints in `messageContext`.
+
+Use `--context` to supply the app domain, audience, tone or preferred terminology:
+
+```bash
+flutter_string_extractor --ai-provider openai --languages de,fr \
+  --context 'Flight reservations. Book is the action to reserve a seat. Use concise UI language.' \
+  --dry-run
+```
+
+Context is limited to 2,000 characters. Keep credentials and confidential business
+data out of it. Context cannot override JSON, ID or formatting requirements.
+The library equivalent is `projectContext: 'Flight reservations...'`.
+
+One key still receives one translation. If the same English text needs different
+meanings, use separate named keys (for example `bookFlight` and `bookNoun`) and
+ARB descriptions. Adding more context cannot make a single shared key represent
+two different translations. Existing translations are preserved; new prompts
+do not replace old values automatically.
+
+Local mode uses the [OpenAI-compatible Chat Completions API in Ollama](https://docs.ollama.com/api/openai-compatibility)
+and [LM Studio](https://lmstudio.ai/docs/developer/openai-compat/chat-completions).
+Compatible vLLM servers can use the same interface. Run the server and install
+or load your chosen model separately. The extractor never downloads models,
+chooses an unknown local model, or falls back to a cloud provider.
+
+```bash
+# Ollama: choose a model already present in `ollama list`.
+flutter_string_extractor --ai-provider local --model your-installed-model \
+  --languages de,fr --context 'Flight reservations. Use concise UI text.' --dry-run
+# Replace --dry-run with --accept-ai to generate the language files.
+
+# LM Studio: use the identifier of your loaded model.
+flutter_string_extractor --ai-provider local --model your-loaded-model \
+  --ai-base-url http://127.0.0.1:1234/v1 --languages de --accept-ai
+
+# vLLM, or another server with a model namespace:
+flutter_string_extractor --ai-provider local --model organization/model-name \
+  --ai-base-url http://127.0.0.1:8000/v1 --languages de --ai-timeout 300 --accept-ai
+```
+
+The default local base URL is `http://127.0.0.1:11434/v1`. HTTP(S) loopback
+addresses and `localhost` are accepted, including IPv6 `::1`; remote/LAN URLs,
+userinfo, query strings, fragments and redirects are rejected. For containers,
+publish the server port onto localhost. `--ai-base-url` applies only to local
+mode, so cloud credentials cannot be redirected to a custom server.
+
+No API key is needed for an ordinary local server. If your server requires
+authentication, set `LOCAL_AI_API_KEY`; cloud provider keys are not reused.
+Local requests default to 180 seconds; `--ai-timeout` accepts 1–3600 seconds for
+any provider. Library callers can use `baseUrl` and `timeout: Duration(...)`.
+Choose a multilingual model that supports JSON output, with enough context for
+the prompts, usage hints and reply. Smaller models can produce worse translations
+or invalid JSON. Incomplete, refused or malformed replies abort without writes;
+local mode retains the request and response-size limits.
+
+The extractor sends local-mode requests only to the loopback server. That
+server can itself use hosted models or telemetry: configure an offline model
+if keeping all data on your machine is required. Review translations even when
+everything runs locally; neither prompts nor automated tests guarantee accuracy.
 
 ## Generated localizations and ICU messages
 
@@ -320,10 +402,13 @@ Warnings about unresolved messages do not change the successful exit code.
 | `--function` | Repeatable translator method name; key is the first positional argument |
 | `--getter` | Repeatable String getter/extension method name |
 | `--from-arb` | Source ARB catalog to import |
-| `--ai-provider` | Optional AI mode: `openai`, `claude`, or `gemini`; scan root defaults to `.` |
+| `--ai-provider` | `openai`, `claude`, `gemini`, or `local`; scan root defaults to `.` |
 | `--languages` | Required AI target locale codes, comma-separated or repeated |
 | `--source-language` | AI source locale; defaults to `en` |
-| `--model` | Override the selected provider's low-cost model |
+| `--model` | Override a cloud default; required for local mode |
+| `--ai-base-url` | Local loopback API base URL; defaults to `http://127.0.0.1:11434/v1` |
+| `--ai-timeout` | Request timeout in seconds (cloud 60; local 180) |
+| `--context` | App domain, audience, tone and terminology; at most 2,000 characters |
 | `--output-dir` | AI catalog directory; defaults to `assets/translations` |
 | `--accept-ai` | Required before AI network calls; acknowledges privacy, charges, and mistakes |
 | `--max-ai-requests` | Hard per-run request limit; defaults to `100` |
@@ -398,7 +483,7 @@ Run `dart pub global list`. To update a pub.dev installation, run
 
 ```bash
 dart pub get
-dart analyze
+dart analyze --fatal-infos
 dart test
 dart test --test-randomize-ordering-seed=421
 dart format --output=none --set-exit-if-changed lib bin/main.dart test example/main.dart
@@ -408,14 +493,14 @@ Tests exercise translation APIs, Unicode/escaped literals, ARB imports, nested
 catalogs, CLI errors, permissions, and unsafe destinations. A seeded stress
 case extracts 500 messages across 20 files and checks ten subsequent writes
 for identical output. CI runs the suite on Linux, macOS, and Windows with
-Dart 3.9.0 and stable. Formatting is checked with Dart 3.9.0 to keep the
+Dart 3.13.0 and stable. Formatting is checked with Dart 3.13.0 to keep the
 formatter consistent across SDK updates. Fork pull requests receive read-only
 CI permissions.
 
 ## Publishing releases
 
 The [publishing workflow](.github/workflows/publish.yml) runs when a version tag
-such as `v2.1.0` is pushed. It uses the official Dart reusable workflow and
+such as `v3.0.0` is pushed. It uses the official Dart reusable workflow and
 short-lived OIDC authentication; no pub.dev credentials belong in this public
 repository. Regular pushes to `main` run CI; publishing requires a version tag.
 
@@ -430,8 +515,8 @@ checks to pass. Confirm the tag version equals the package version and has not
 already been published, then release it:
 
 ```bash
-git tag v2.1.0
-git push origin v2.1.0
+git tag v3.0.0
+git push origin v3.0.0
 ```
 
 For later releases, use the new package version in both commands. Restrict

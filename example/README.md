@@ -1,7 +1,7 @@
 # Flutter String Extractor Example
 
 This example previews the strings extracted from a Flutter project's source
-without creating or modifying a translation file. Requires Dart 3.9+.
+without creating or modifying a translation file. Requires Dart 3.13+.
 
 ## Usage
 

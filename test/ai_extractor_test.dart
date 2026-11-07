@@ -50,9 +50,8 @@ void main() {
 
   void catalog(String locale, Map<String, dynamic> contents) {
     output.createSync(recursive: true);
-    File(
-      p.join(output.path, '$locale.json'),
-    ).writeAsStringSync(jsonEncode(contents));
+    File(p.join(output.path, '$locale.json'))
+        .writeAsStringSync(jsonEncode(contents));
   }
 
   Map<String, dynamic> read(String locale) =>
@@ -80,54 +79,54 @@ void main() {
     sourceArb: sourceArb,
   );
 
+  test('selects unmarked text, keeps marked keys, and translates every locale', () async {
+    const code =
+        "void f() { Text('Welcome'); 'settings.title'.tr; final url = 'https://example.com'; }";
+    writeSource(code);
+    final result = await run();
+    expect(read('en'), {
+      'Welcome': 'Welcome',
+      'settings.title': 'settings.title',
+    });
+    expect(read('de'), {
+      'Welcome': 'de: Welcome',
+      'settings.title': 'de: settings.title',
+    });
+    expect(read('fr'), {
+      'Welcome': 'fr: Welcome',
+      'settings.title': 'fr: settings.title',
+    });
+    expect(result.translatedCount, 4);
+    expect(File(p.join(source.path, 'app.dart')).readAsStringSync(), code);
+    expect(server.requests, hasLength(3));
+  });
+
   test(
-    'selects unmarked text, keeps marked keys, and translates every locale',
+    'retains human edits, nested values, and stale keys on reruns',
     () async {
-      const code =
-          "void f() { Text('Welcome'); 'settings.title'.tr; final url = 'https://example.com'; }";
-      writeSource(code);
-      final result = await run();
-      expect(read('en'), {
-        'Welcome': 'Welcome',
-        'settings.title': 'settings.title',
+      writeSource(
+        "void f() { Text('Welcome'); 'settings.title'.tr; 'settings.subtitle'.tr; }",
+      );
+      catalog('en', {
+        'settings': {'title': 'Settings', 'subtitle': 'Preferences'},
       });
+      catalog('de', {
+        'Welcome': 'Willkommen',
+        'settings': {'title': 'Einstellungen'},
+        'old': 'Alt',
+      });
+      final result = await run(languages: ['de']);
       expect(read('de'), {
-        'Welcome': 'de: Welcome',
-        'settings.title': 'de: settings.title',
+        'Welcome': 'Willkommen',
+        'settings': {'title': 'Einstellungen', 'subtitle': 'de: Preferences'},
+        'old': 'Alt',
       });
-      expect(read('fr'), {
-        'Welcome': 'fr: Welcome',
-        'settings.title': 'fr: settings.title',
-      });
-      expect(result.translatedCount, 4);
-      expect(File(p.join(source.path, 'app.dart')).readAsStringSync(), code);
-      expect(server.requests, hasLength(3));
+      expect(result.translatedCount, 1);
+      server.requests.clear();
+      await run(languages: ['de']);
+      expect(server.requests, isEmpty);
     },
   );
-
-  test('retains human edits, nested values, and stale keys on reruns', () async {
-    writeSource(
-      "void f() { Text('Welcome'); 'settings.title'.tr; 'settings.subtitle'.tr; }",
-    );
-    catalog('en', {
-      'settings': {'title': 'Settings', 'subtitle': 'Preferences'},
-    });
-    catalog('de', {
-      'Welcome': 'Willkommen',
-      'settings': {'title': 'Einstellungen'},
-      'old': 'Alt',
-    });
-    final result = await run(languages: ['de']);
-    expect(read('de'), {
-      'Welcome': 'Willkommen',
-      'settings': {'title': 'Einstellungen', 'subtitle': 'de: Preferences'},
-      'old': 'Alt',
-    });
-    expect(result.translatedCount, 1);
-    server.requests.clear();
-    await run(languages: ['de']);
-    expect(server.requests, isEmpty);
-  });
 
   test('dry run scans without consent, keys, network, or writes', () async {
     writeSource("void f() { Text('Welcome'); }");
@@ -160,9 +159,8 @@ void main() {
     expect(
       server.requests.every(
         (r) =>
-            !jsonEncode(
-              r.body,
-            ).contains('sk-abcdefghijklmnopqrstuvwxyz123456') &&
+            !jsonEncode(r.body)
+                .contains('sk-abcdefghijklmnopqrstuvwxyz123456') &&
             !jsonEncode(r.body).contains('test-secret-key'),
       ),
       isTrue,
@@ -432,8 +430,7 @@ void main() {
     server = await AiServer.start(
       (_) => {
         'translations': {
-          '0':
-              r'Preis: {price, number}; {price, number, currency}; %s; %1$s; %02d; %.2f',
+          '0': r'Preis: {price, number}; {price, number, currency}; %s; %1$s; %02d; %.2f',
         },
       },
     );

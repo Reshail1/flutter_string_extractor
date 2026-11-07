@@ -15,14 +15,18 @@ class ExtractionResult {
     this.filesScanned,
     this.extractedCount,
     this.addedCount,
-    this.warnings,
-  );
+    this.warnings, {
+    this.contexts = const {},
+  });
 
   final Map<String, dynamic> translations;
   final int filesScanned;
   final int extractedCount;
   final int addedCount;
   final List<String> warnings;
+
+  /// Up to two bounded source usages per message; no surrounding literal values.
+  final Map<String, List<String>> contexts;
 
   String get json =>
       '${const JsonEncoder.withIndent('  ').convert(translations)}\n';
@@ -57,6 +61,7 @@ class FlutterStringExtractor {
     final messages = <String, String>{};
     final namedMessages = <String>{};
     final warnings = <String>[];
+    final contexts = <String, List<String>>{};
     final patterns = exclude
         .map((pattern) => Glob(pattern, context: p.posix))
         .toList();
@@ -86,6 +91,20 @@ class FlutterStringExtractor {
           allStrings: allStrings,
           functions: functions,
           getters: getters,
+          onMessage: (key, offset, syntax) {
+            final location = parsed.lineInfo.getLocation(offset);
+            final relative = p
+                .split(p.relative(file.path, from: source.path))
+                .join('/');
+            final context = '$relative:${location.lineNumber}: $syntax';
+            final bounded = context.length > 240
+                ? context.substring(0, 240)
+                : context;
+            final usages = contexts.putIfAbsent(key, () => []);
+            if (usages.length < 2 && !usages.contains(bounded)) {
+              usages.add(bounded);
+            }
+          },
           onWarning: (offset, reason) {
             final location = parsed.lineInfo.getLocation(offset);
             warnings.add(
@@ -103,7 +122,8 @@ class FlutterStringExtractor {
               FileSystemEntity.identicalSync(catalog.path, output.path)))) {
         throw ArgumentError('Output must differ from the source ARB catalog.');
       }
-      for (final entry in CatalogIO.readDictionary(catalog).entries) {
+      final catalogMessages = CatalogIO.readDictionary(catalog);
+      for (final entry in catalogMessages.entries) {
         if (entry.key.startsWith('@')) continue;
         if (entry.value is! String) {
           throw FormatException(
@@ -111,6 +131,16 @@ class FlutterStringExtractor {
           );
         }
         messages[entry.key] = entry.value as String;
+        final metadata = catalogMessages['@${entry.key}'];
+        final description = metadata is Map ? metadata['description'] : null;
+        if (description is String && description.trim().isNotEmpty) {
+          final context =
+              '${p.basename(catalog.path)}: description $description';
+          contexts[entry.key] = [
+            context.length > 240 ? context.substring(0, 240) : context,
+            ...?contexts[entry.key],
+          ].take(2).toList();
+        }
       }
     }
 
@@ -136,6 +166,10 @@ class FlutterStringExtractor {
       messages.length,
       added,
       List.unmodifiable(warnings),
+      contexts: Map.unmodifiable({
+        for (final entry in contexts.entries)
+          entry.key: List<String>.unmodifiable(entry.value),
+      }),
     );
     if (!dryRun) CatalogIO.writeOutput(output, result.json);
     return result;
@@ -154,8 +188,9 @@ class FlutterStringExtractor {
         (pattern) =>
             pattern.matches(relative) ||
             (entity is Directory && pattern.matches('$relative/')),
-      ))
+      )) {
         continue;
+      }
       if (entity is Directory) {
         if (!{
           '.git',

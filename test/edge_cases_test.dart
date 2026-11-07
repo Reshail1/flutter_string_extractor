@@ -370,9 +370,8 @@ void f(bool visible) {
 
   test('skips symlinked source directories and their outside content', () {
     final external = Directory(p.join(root.path, 'external'))..createSync();
-    File(
-      p.join(external.path, 'private.dart'),
-    ).writeAsStringSync("void f() { 'Outside'.tr; }");
+    File(p.join(external.path, 'private.dart'))
+        .writeAsStringSync("void f() { 'Outside'.tr; }");
     Link(p.join(source.path, 'linked')).createSync(external.path);
     writeSource("void f() { 'Inside'.tr; }");
     expect(extract().translations, {'Inside': 'Inside'});
@@ -397,18 +396,14 @@ void f(bool visible) {
     },
   );
 
-  test(
-    'retains shared POSIX permissions across repeated replacements',
-    () {
-      writeSource("void f() { 'Hello'.tr; }");
-      output.writeAsStringSync('{}');
-      final chmod = Process.runSync('/bin/chmod', ['640', output.path]);
-      expect(chmod.exitCode, 0, reason: chmod.stderr.toString());
-      for (var repeat = 0; repeat < 3; repeat++) {
-        extract(dryRun: false);
-        expect(output.statSync().mode & 0x1ff, 0x1a0);
-      }
-    },
-    skip: Platform.isWindows,
-  );
+  test('retains shared POSIX permissions across repeated replacements', () {
+    writeSource("void f() { 'Hello'.tr; }");
+    output.writeAsStringSync('{}');
+    final chmod = Process.runSync('/bin/chmod', ['640', output.path]);
+    expect(chmod.exitCode, 0, reason: chmod.stderr.toString());
+    for (var repeat = 0; repeat < 3; repeat++) {
+      extract(dryRun: false);
+      expect(output.statSync().mode & 0x1ff, 0x1a0);
+    }
+  }, skip: Platform.isWindows);
 }

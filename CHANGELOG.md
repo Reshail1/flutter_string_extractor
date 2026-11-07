@@ -1,3 +1,18 @@
+# [3.0.0] - 2026-11-07
+
+- Upgrade analyzer to 14.7.0 and test to 1.33.0, including the new argument
+  AST API. Require Dart 3.13+ and align the CI SDK matrix.
+- Enable Dart core lints locally and in CI, and fix all missing-brace findings.
+- Improve AI prompts for UI intent, natural grammar, regional conventions,
+  terminology consistency, and private completeness/meaning checks.
+- Add bounded relative source locations, UI roles, named keys and ARB descriptions
+  to model context, plus optional `--context` app-domain guidance.
+- Validate markup and explicit line breaks as well as placeholder integrity.
+- Filter credentials using the same trimmed values used for authentication.
+- Support local OpenAI-compatible models with `--ai-provider local`, explicit
+  model selection, optional local authentication, configurable loopback base URL,
+  and request timeout. No cloud fallback or automatic model downloads.
+
 # [2.1.0] - 2026-11-03
 
 - Optional AI discovery and translation with user-owned OpenAI, Claude, or Gemini
