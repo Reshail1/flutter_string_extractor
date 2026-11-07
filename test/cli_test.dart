@@ -162,8 +162,8 @@ void main() {
     );
   });
 
-  test('rejects invalid AI timeout and context without a provider', () async {
-    for (final timeout in ['0', '-1', 'abc']) {
+  for (final timeout in ['0', '-1', 'abc']) {
+    test('rejects invalid AI timeout $timeout', () async {
       final result = await run([
         '--ai-provider',
         'local',
@@ -177,7 +177,10 @@ void main() {
       ]);
       expect(result.exitCode, isNot(0));
       expect(result.stderr, contains('--ai-timeout'));
-    }
+    });
+  }
+
+  test('rejects project context without a provider', () async {
     final context = await run(['--context', 'Travel app', '--dry-run']);
     expect(context.exitCode, 64);
     expect(context.stderr, contains('--ai-provider'));
